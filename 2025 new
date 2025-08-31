@@ -1,0 +1,170 @@
+-- Serviços
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local TextChatService = game:GetService("TextChatService")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+local guiOpen = false
+
+-- Sons
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://9080070218"
+clickSound.Volume = 1
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = Player:WaitForChild("PlayerGui")
+screenGui.IgnoreGuiInset = true
+
+-- Botão de abrir/fechar (sempre à esquerda, mais para baixo)
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 120, 0, 40)
+toggleButton.Position = UDim2.new(0, 20, 0, 120) -- mais para baixo
+toggleButton.Text = "Abrir GUI"
+toggleButton.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+toggleButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.TextScaled = true
+toggleButton.Parent = screenGui
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 15)
+toggleCorner.Parent = toggleButton
+
+-- Frame principal (centralizado e menor)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 350, 0, 240) -- diminuiu largura e altura
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 25) -- bordas mais arredondadas
+uiCorner.Parent = mainFrame
+
+-- Barra de título com gradiente animado
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(0,0,0)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local uiCornerTitle = Instance.new("UICorner")
+uiCornerTitle.CornerRadius = UDim.new(0, 25) -- arredondado maior
+uiCornerTitle.Parent = titleBar
+
+-- Texto do título
+local titleText = Instance.new("TextLabel")
+titleText.Size = UDim2.new(1, -10, 1, 0)
+titleText.Position = UDim2.new(0, 10, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "Pixel Chat💉🩸"
+titleText.TextColor3 = Color3.fromRGB(255, 0, 0)
+titleText.Font = Enum.Font.GothamBold
+titleText.TextScaled = true
+titleText.Parent = titleBar
+
+-- Gradient animado do demônio
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,0,0)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))
+}
+gradient.Rotation = 45
+gradient.Parent = titleBar
+
+-- Tween para animar gradiente
+local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
+local tween = TweenService:Create(gradient, tweenInfo, {Rotation = 405})
+tween:Play()
+
+-- Fundo imagem
+local background = Instance.new("ImageLabel")
+background.Size = UDim2.new(1, 0, 1, 0)
+background.Position = UDim2.new(0, 0, 0, 0)
+background.Image = "rbxassetid://77459591632551"
+background.BackgroundTransparency = 1
+background.ScaleType = Enum.ScaleType.Stretch
+background.Parent = mainFrame
+
+-- TextBox
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(0, 300, 0, 50)
+textBox.Position = UDim2.new(0.5, -150, 0.45, -25)
+textBox.BackgroundColor3 = Color3.fromRGB(30,0,0)
+textBox.TextColor3 = Color3.fromRGB(255,0,0)
+textBox.Font = Enum.Font.GothamBold
+textBox.PlaceholderText = "Digite a mensagem aqui..."
+textBox.TextScaled = true
+textBox.Parent = mainFrame
+local textCorner = Instance.new("UICorner")
+textCorner.CornerRadius = UDim.new(0, 20)
+textCorner.Parent = textBox
+
+-- Botão enviar
+local sendButton = Instance.new("TextButton")
+sendButton.Size = UDim2.new(0, 160, 0, 45) -- menor para caber na GUI reduzida
+sendButton.Position = UDim2.new(0.5, -80, 0.7, -22)
+sendButton.Text = "Enviar!"
+sendButton.BackgroundColor3 = Color3.fromRGB(20,0,0)
+sendButton.TextColor3 = Color3.fromRGB(255,0,0)
+sendButton.Font = Enum.Font.GothamBold
+sendButton.TextScaled = true
+sendButton.Parent = mainFrame
+local sendCorner = Instance.new("UICorner")
+sendCorner.CornerRadius = UDim.new(0, 20)
+sendCorner.Parent = sendButton
+
+-- Fade in/out botão enviar
+local tweenButton = TweenService:Create(sendButton, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {BackgroundTransparency = 0.5})
+tweenButton:Play()
+
+-- Função enviar mensagem
+local function sendMessage()
+    local message = textBox.Text
+    if message == "" then return end
+    local chatChannel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+    chatChannel:SendAsync(message)
+    clickSound:Play()
+end
+sendButton.MouseButton1Click:Connect(sendMessage)
+
+-- Abrir/fechar GUI
+toggleButton.MouseButton1Click:Connect(function()
+    guiOpen = not guiOpen
+    mainFrame.Visible = guiOpen
+    toggleButton.Text = guiOpen and "chat spam" or "chat spam"
+end)
+
+-- Arrastar GUI
+local dragging = false
+local dragInput, mousePos, framePos
+local function update(input)
+    local delta = input.Position - mousePos
+    mainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+end
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        mousePos = input.Position
+        framePos = mainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        update(input)
+    end
+end)
